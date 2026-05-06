@@ -35,11 +35,7 @@ export default function HomePage() {
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'Google Sans', color: '#111', lineHeight: 1 }}>Home</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              <DateTimePill
-                time={formatClock(now)}
-                monthYear={now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                onMonthYearClick={() => setShowCalendar(true)}
-              />
+              <DateTimePill time={formatClock(now)} />
               <span style={{ fontSize: 12, color: '#555', fontFamily: 'Google Sans' }}>{formatDate(now)}</span>
             </div>
           </div>

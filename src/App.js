@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import BottomNav from './components/BottomNav';
+import PomodoroCompleteModal from './components/PomodoroCompleteModal';
 import HomePage from './pages/HomePage';
 import AddTaskPage from './pages/AddTaskPage';
 import TasksPage from './pages/TasksPage';
@@ -28,6 +29,7 @@ function Router() {
         {page === 'activitydetail' && <ActivityDetailPage />}
       </div>
       {showNav && <BottomNav />}
+      <PomodoroCompleteModal />
     </div>
   );
 }

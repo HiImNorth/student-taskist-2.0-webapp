@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 const AppContext = createContext();
 
@@ -21,10 +21,11 @@ const INITIAL_ACTIVITIES = [
   { id: 5, name: 'HomeWork 2', place: '@ Emephar', note: '', type: 'group', color: '#FFE566', date: new Date(), time: '14:00', completed: false, pomodoroLinked: false },
 ];
 
+// duration stored as total seconds
 const INITIAL_POMODORO_SESSIONS = [
-  { id: 1, name: 'Focus', duration: 30, type: 'focus' },
-  { id: 2, name: 'Break', duration: 5, type: 'break' },
-  { id: 3, name: 'Long Break', duration: 10, type: 'longbreak' },
+  { id: 1, name: 'Focus', duration: 1800, type: 'focus' },
+  { id: 2, name: 'Break', duration: 300, type: 'break' },
+  { id: 3, name: 'Long Break', duration: 600, type: 'longbreak' },
 ];
 
 export function AppProvider({ children }) {
@@ -35,13 +36,115 @@ export function AppProvider({ children }) {
   const [viewingActivity, setViewingActivity] = useState(null);
   const [prevPage, setPrevPage] = useState('home');
 
+  const [pomodoroMode, setPomodoroMode] = useState('focus');
+  const [pomodoroRunning, setPomodoroRunning] = useState(false);
+  const [pomodoroLinkedActivity, setPomodoroLinkedActivity] = useState(null);
+  const [pomodoroCustomTotal, setPomodoroCustomTotal] = useState(null);
+  const [pomodoroFinished, setPomodoroFinished] = useState(false);
+  const [pomodoroFinishedMode, setPomodoroFinishedMode] = useState(null);
+
+  const pomodoroSession = pomodoroSessions.find(s => s.type === pomodoroMode) || pomodoroSessions[0];
+  const pomodoroTotalSeconds =
+    pomodoroMode === 'custom' && pomodoroCustomTotal !== null
+      ? pomodoroCustomTotal
+      : (pomodoroSession?.duration || 1800);
+  const [pomodoroSecondsLeft, setPomodoroSecondsLeft] = useState(pomodoroTotalSeconds);
+
+  const prevModeRef = useRef(pomodoroMode);
+  const pomodoroIntervalRef = useRef(null);
+  const timerFinishedRef = useRef(false);
+  const pomodoroModeRef = useRef(pomodoroMode);
+  const sessionsInitialized = useRef(false);
+
+  useEffect(() => {
+    pomodoroModeRef.current = pomodoroMode;
+  }, [pomodoroMode]);
+
+  const playAlarmSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || window['webkitAudioContext'];
+      const audioCtx = new AudioCtx();
+      const beep = (startTime, duration, freq) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+      const now = audioCtx.currentTime;
+      beep(now, 0.25, 880);
+      beep(now + 0.35, 0.25, 880);
+      beep(now + 0.7, 0.5, 1100);
+    } catch (_) {}
+  };
+
+  const sendNotification = () => {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const labels = { focus: 'Focus', break: 'Break', longbreak: 'Long Break' };
+    new Notification('Pomodoro Timer', {
+      body: `${labels[pomodoroModeRef.current] || 'Session'} session complete!`,
+      icon: '/favicon.ico',
+    });
+  };
+
+  useEffect(() => {
+    if (prevModeRef.current !== pomodoroMode) {
+      prevModeRef.current = pomodoroMode;
+      setPomodoroSecondsLeft(pomodoroTotalSeconds);
+      setPomodoroRunning(false);
+    }
+  }, [pomodoroMode, pomodoroTotalSeconds]);
+
+  useEffect(() => {
+    if (!sessionsInitialized.current) { sessionsInitialized.current = true; return; }
+    setPomodoroRunning(false);
+    setPomodoroSecondsLeft(pomodoroTotalSeconds);
+  }, [pomodoroSessions]);
+
+  useEffect(() => {
+    if (pomodoroRunning) {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+      pomodoroIntervalRef.current = setInterval(() => {
+        setPomodoroSecondsLeft(s => {
+          if (s <= 1) {
+            timerFinishedRef.current = true;
+            clearInterval(pomodoroIntervalRef.current);
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(pomodoroIntervalRef.current);
+    }
+    return () => clearInterval(pomodoroIntervalRef.current);
+  }, [pomodoroRunning]);
+
+  useEffect(() => {
+    if (pomodoroSecondsLeft === 0 && timerFinishedRef.current) {
+      timerFinishedRef.current = false;
+      setPomodoroRunning(false);
+      playAlarmSound();
+      sendNotification();
+      setPomodoroFinishedMode(pomodoroModeRef.current);
+      setPomodoroFinished(true);
+    }
+  }, [pomodoroSecondsLeft]);
+
   const navigate = (to, from) => {
     setPrevPage(from || page);
     setPage(to);
   };
 
   const addActivity = (activity) => {
-    setActivities(prev => [...prev, { ...activity, id: Date.now(), completed: false }]);
+    setActivities(prev => [...prev, { id: Date.now(), completed: false, ...activity }]);
   };
 
   const updateActivity = (id, updates) => {
@@ -68,6 +171,14 @@ export function AppProvider({ children }) {
       activities, addActivity, updateActivity, deleteActivity, toggleComplete,
       todayActivities,
       pomodoroSessions, setPomodoroSessions,
+      pomodoroMode, setPomodoroMode,
+      pomodoroRunning, setPomodoroRunning,
+      pomodoroSecondsLeft, setPomodoroSecondsLeft,
+      pomodoroTotalSeconds,
+      pomodoroCustomTotal, setPomodoroCustomTotal,
+      pomodoroFinished, setPomodoroFinished,
+      pomodoroFinishedMode,
+      pomodoroLinkedActivity, setPomodoroLinkedActivity,
       editingActivity, setEditingActivity,
       viewingActivity, setViewingActivity,
     }}>

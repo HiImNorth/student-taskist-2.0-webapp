@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export function FAB() {
@@ -32,36 +32,71 @@ export function DateTimePill({ time, small }) {
   );
 }
 
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function getMonday(d) {
+  const day = new Date(d);
+  const dow = day.getDay();
+  day.setDate(day.getDate() - (dow === 0 ? 6 : dow - 1));
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
 export function WeekStrip({ selectedDate, onSelect }) {
   const today = new Date();
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const monday = getMonday(today);
+  monday.setDate(monday.getDate() + weekOffset * 7);
+
   const week = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    const dayOfWeek = today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    const day = new Date(monday);
-    day.setDate(monday.getDate() + i);
-    return day;
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
   });
 
+  const isCurrentWeek = weekOffset === 0;
+
+  const arrowBtn = {
+    width: 28, height: 28, flexShrink: 0, borderRadius: '50%',
+    background: 'transparent', border: 'none', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 18, fontWeight: 700, color: '#111', fontFamily: 'Google Sans',
+  };
+
   return (
-    <div style={{ display: 'flex', gap: 4, overflowX: 'auto', padding: '4px 0' }}>
-      {week.map((d, i) => {
-        const isToday = d.toDateString() === today.toDateString();
-        const isSelected = selectedDate && d.toDateString() === new Date(selectedDate).toDateString();
-        return (
-          <button key={i} onClick={() => onSelect && onSelect(d)} style={{
-            flex: '0 0 auto', width: 38, padding: '6px 0',
-            borderRadius: 10, border: 'none', cursor: 'pointer',
-            background: isSelected || isToday ? '#111' : 'transparent',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-          }}>
-            <span style={{ fontSize: 9, fontFamily: 'Google Sans', color: isSelected || isToday ? 'white' : '#000000' }}>{days[i]}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Google Sans', color: isSelected || isToday ? 'white' : '#111' }}>{d.getDate()}</span>
-          </button>
-        );
-      })}
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <button style={arrowBtn} onClick={() => setWeekOffset(w => w - 1)}>‹</button>
+        <div style={{ flex: 1, display: 'flex', gap: 3 }}>
+          {week.map((d, i) => {
+            const isToday = d.toDateString() === today.toDateString();
+            const isSelected = selectedDate && d.toDateString() === new Date(selectedDate).toDateString();
+            const bg = isSelected ? '#111' : isToday ? '#bbb' : 'transparent';
+            const textColor = isSelected ? 'white' : '#111';
+            return (
+              <button key={i} onClick={() => onSelect && onSelect(d)} style={{
+                flex: 1, padding: '6px 0', borderRadius: 10, border: 'none',
+                cursor: 'pointer', background: bg,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              }}>
+                <span style={{ fontSize: 9, fontFamily: 'Google Sans', color: textColor }}>{DAYS[i]}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Google Sans', color: textColor }}>{d.getDate()}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button style={arrowBtn} onClick={() => setWeekOffset(w => w + 1)}>›</button>
+      </div>
+      {!isCurrentWeek && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 5 }}>
+          <button onClick={() => setWeekOffset(0)} style={{
+            background: 'rgba(0,0,0,0.15)', border: 'none', borderRadius: 12,
+            padding: '3px 14px', fontSize: 11, fontFamily: 'Google Sans',
+            fontWeight: 600, color: '#111', cursor: 'pointer',
+          }}>Today</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -75,6 +110,20 @@ export function ProfileAvatar() {
       color: 'white', fontWeight: 700, fontSize: 14, fontFamily: 'Google Sans',
       flexShrink: 0,
     }}>U</div>
+  );
+}
+
+export function PageLogo({ invert = false }) {
+  return (
+    <img
+      src="/Logo.svg"
+      alt="Logo"
+      style={{
+        position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)',
+        height: 26, pointerEvents: 'none',
+        filter: invert ? 'invert(1)' : 'none',
+      }}
+    />
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { FAB, DateTimePill, ProfileAvatar } from '../components/SharedComponents';
+import { FAB, DateTimePill, ProfileAvatar, PageLogo } from '../components/SharedComponents';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -33,7 +33,8 @@ export default function CalendarPage() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
       {/* Header */}
-      <div style={{ background: '#F4845F', padding: '52px 20px 16px' }}>
+      <div style={{ background: '#F4845F', padding: '52px 20px 16px', position: 'relative' }}>
+        <PageLogo />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ fontSize: 26, fontWeight: 700, fontFamily: 'Google Sans', color: 'white' }}>Calendar</h1>

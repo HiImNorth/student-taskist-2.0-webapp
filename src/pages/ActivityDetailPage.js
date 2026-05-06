@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { TypeBadge } from '../components/SharedComponents';
+import { TypeBadge, PageLogo } from '../components/SharedComponents';
 
 export default function ActivityDetailPage() {
   const { viewingActivity, setViewingActivity, deleteActivity, setEditingActivity, navigate, prevPage } = useApp();
@@ -20,10 +20,26 @@ export default function ActivityDetailPage() {
 
   const dateStr = new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+  const openGoogleCalendar = () => {
+    const [h, m] = (a.time || '12:00').split(':').map(Number);
+    const start = new Date(a.date);
+    start.setHours(h, m, 0, 0);
+    const end = new Date(start);
+    end.setHours(end.getHours() + 1);
+    const fmt = d => {
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
+    };
+    const details = [a.note, a.type === 'group' ? '👥 Group Task' : '👤 Individual Task'].filter(Boolean).join('\n');
+    const params = new URLSearchParams({ action: 'TEMPLATE', text: a.name, dates: `${fmt(start)}/${fmt(end)}`, details, location: a.place || '' });
+    window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, '_blank');
+  };
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
       {/* Colored header */}
-      <div style={{ background: a.color, padding: '52px 20px 28px', minHeight: 180 }}>
+      <div style={{ background: a.color, padding: '52px 20px 28px', minHeight: 180, position: 'relative' }}>
+        <PageLogo />
         <button onClick={() => { setViewingActivity(null); navigate(prevPage || 'home'); }} style={{
           width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.8)',
           border: 'none', cursor: 'pointer', fontSize: 18, fontWeight: 700, marginBottom: 16,
@@ -75,6 +91,14 @@ export default function ActivityDetailPage() {
             color: '#111', borderRadius: 20, padding: '5px 14px',
             fontSize: 12, fontFamily: 'Google Sans', fontWeight: 600,
           }}>{a.completed ? '✓ Completed' : '○ Not completed'}</span>
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <button onClick={openGoogleCalendar} style={{
+            border: '1.5px solid #111', background: 'transparent', borderRadius: 20,
+            padding: '8px 16px', fontSize: 13, fontFamily: 'Google Sans', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>📅 Add Calendar</button>
         </div>
       </div>
 

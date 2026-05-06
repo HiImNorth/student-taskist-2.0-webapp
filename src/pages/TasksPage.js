@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { FAB, DateTimePill, WeekStrip, ProfileAvatar, ColorDot } from '../components/SharedComponents';
+import { FAB, DateTimePill, WeekStrip, ProfileAvatar, ColorDot, PageLogo } from '../components/SharedComponents';
 
 export default function TasksPage({ mode = 'individual' }) {
   const { activities, toggleComplete, setViewingActivity, navigate } = useApp();
@@ -26,7 +26,8 @@ export default function TasksPage({ mode = 'individual' }) {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
       {/* Header */}
-      <div style={{ background: headerBg, padding: '52px 20px 16px' }}>
+      <div style={{ background: headerBg, padding: '52px 20px 16px', position: 'relative' }}>
+        <PageLogo />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ fontSize: 26, fontWeight: 700, fontFamily: 'Google Sans', color: 'white' }}>{title}</h1>

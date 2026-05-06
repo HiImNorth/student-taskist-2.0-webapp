@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { FAB, DateTimePill, ProfileAvatar } from '../components/SharedComponents';
+import { FAB, DateTimePill, ProfileAvatar, PageLogo } from '../components/SharedComponents';
 
 function formatDate(date) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -21,14 +21,15 @@ export default function HomePage() {
 
   const incomplete = todayActivities.filter(a => !a.completed);
   const completed = todayActivities.filter(a => a.completed);
-  const groupTasks = todayActivities.filter(a => a.type === 'group');
+  const groupTasks = todayActivities.filter(a => a.type === 'group' && !a.completed);
   const completedCount = todayActivities.filter(a => a.completed).length;
   const pct = todayActivities.length ? Math.round((completedCount / todayActivities.length) * 100) : 0;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '52px 20px 16px', background: 'white' }}>
+      <div style={{ padding: '52px 20px 16px', background: 'white', position: 'relative' }}>
+        <PageLogo />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'Google Sans', color: '#111', lineHeight: 1 }}>Home</h1>
@@ -45,14 +46,14 @@ export default function HomePage() {
           <div style={{ flex: 1, background: '#f5f5f5', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 36, fontWeight: 700, fontFamily: 'Google Sans', color: '#111' }}>{incomplete.length}</span>
             <div>
-              <div style={{ fontSize: 12, fontFamily: 'Google Sans', color: '#555', lineHeight: 1.3 }}>Incomplete<br/>Task</div>
+              <div style={{ fontSize: 12, fontFamily: 'Google Sans', color: '#555', lineHeight: 1.3 }}>Incomplete<br/>Individual Task</div>
               <span style={{ fontSize: 16 }}>👤</span>
             </div>
           </div>
           <div style={{ flex: 1, background: '#f5f5f5', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 36, fontWeight: 700, fontFamily: 'Google Sans', color: '#111' }}>{groupTasks.length}</span>
             <div>
-              <div style={{ fontSize: 12, fontFamily: 'Google Sans', color: '#555', lineHeight: 1.3 }}>Group<br/>Task</div>
+              <div style={{ fontSize: 12, fontFamily: 'Google Sans', color: '#555', lineHeight: 1.3 }}>Incomplete<br/>Group Task</div>
               <span style={{ fontSize: 16 }}>👥</span>
             </div>
           </div>
@@ -158,7 +159,7 @@ export default function HomePage() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Google Sans', color: '#111', lineHeight: 1.3 }}>{activity.name}</span>
-                        <span style={{ fontSize: 14 }}>✓</span>
+                        <span style={{ fontSize: 14 }}>{activity.type === 'group' ? '👥' : '👤'}</span>
                       </div>
                       <div style={{ fontSize: 11, color: '#333', marginTop: 4, fontFamily: 'Google Sans' }}>{activity.place}</div>
                       <div style={{ fontSize: 10, color: '#444', marginTop: 6, fontFamily: 'Google Sans' }}>{activity.time}</div>

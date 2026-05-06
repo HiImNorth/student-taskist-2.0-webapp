@@ -29,7 +29,8 @@ const INITIAL_POMODORO_SESSIONS = [
 ];
 
 export function AppProvider({ children }) {
-  const [page, setPage] = useState('home');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [page, setPage] = useState('login');
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
   const [pomodoroSessions, setPomodoroSessions] = useState(INITIAL_POMODORO_SESSIONS);
   const [editingActivity, setEditingActivity] = useState(null);
@@ -143,6 +144,16 @@ export function AppProvider({ children }) {
     setPage(to);
   };
 
+  const login = (userData) => {
+    setCurrentUser(userData);
+    setPage('home');
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    setPage('login');
+  };
+
   const addActivity = (activity) => {
     setActivities(prev => [...prev, { id: Date.now(), completed: false, ...activity }]);
   };
@@ -167,6 +178,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
+      currentUser, login, logout,
       page, navigate, prevPage,
       activities, addActivity, updateActivity, deleteActivity, toggleComplete,
       todayActivities,

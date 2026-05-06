@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { FAB, DateTimePill, ProfileAvatar, PageLogo } from '../components/SharedComponents';
+import { FAB, DateTimePill, ProfileAvatar, PageLogo, MiniCalendarPopup } from '../components/SharedComponents';
 
 function formatDate(date) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -13,6 +13,7 @@ export default function HomePage() {
   const { todayActivities, navigate, setViewingActivity, toggleComplete } = useApp();
   const [now, setNow] = useState(new Date());
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -34,7 +35,11 @@ export default function HomePage() {
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'Google Sans', color: '#111', lineHeight: 1 }}>Home</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              <DateTimePill time={formatClock(now)} />
+              <DateTimePill
+                time={formatClock(now)}
+                monthYear={now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                onMonthYearClick={() => setShowCalendar(true)}
+              />
               <span style={{ fontSize: 12, color: '#555', fontFamily: 'Google Sans' }}>{formatDate(now)}</span>
             </div>
           </div>
@@ -187,6 +192,13 @@ export default function HomePage() {
       </div>
 
       <FAB />
+      {showCalendar && (
+        <MiniCalendarPopup
+          selectedDate={now}
+          onSelect={() => setShowCalendar(false)}
+          onClose={() => setShowCalendar(false)}
+        />
+      )}
     </div>
   );
 }

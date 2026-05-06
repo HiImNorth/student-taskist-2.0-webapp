@@ -9,6 +9,8 @@ import PomodoroPage from './pages/PomodoroPage';
 import PomodoroEditPage from './pages/PomodoroEditPage';
 import CalendarPage from './pages/CalendarPage';
 import ActivityDetailPage from './pages/ActivityDetailPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 const PAGES_WITH_NAV = ['home', 'tasks', 'groups', 'calendar', 'pomodoro'];
 
@@ -19,6 +21,8 @@ function Router() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', inset: 0, overflowY: 'auto' }}>
+        {page === 'login' && <LoginPage />}
+        {page === 'register' && <RegisterPage />}
         {page === 'home' && <HomePage />}
         {page === 'addtask' && <AddTaskPage />}
         {page === 'tasks' && <TasksPage mode="individual" />}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { FAB, DateTimePill, ProfileAvatar, PageLogo } from '../components/SharedComponents';
+import { FAB, DateTimePill, ProfileAvatar, PageLogo, MiniCalendarPopup } from '../components/SharedComponents';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -10,6 +10,7 @@ export default function CalendarPage() {
   const today = new Date();
   const [viewMonth, setViewMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState(today);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
@@ -39,7 +40,11 @@ export default function CalendarPage() {
           <div>
             <h1 style={{ fontSize: 26, fontWeight: 700, fontFamily: 'Google Sans', color: 'white' }}>Calendar</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-              <DateTimePill time={timeStr} />
+              <DateTimePill
+                time={timeStr}
+                monthYear={now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                onMonthYearClick={() => setShowCalendar(true)}
+              />
               <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontFamily: 'Google Sans' }}>{dateStr}</span>
             </div>
           </div>
@@ -125,6 +130,13 @@ export default function CalendarPage() {
       </div>
 
       <FAB />
+      {showCalendar && (
+        <MiniCalendarPopup
+          selectedDate={selectedDay}
+          onSelect={d => { setSelectedDay(d); setViewMonth(new Date(d.getFullYear(), d.getMonth(), 1)); setShowCalendar(false); }}
+          onClose={() => setShowCalendar(false)}
+        />
+      )}
     </div>
   );
 }

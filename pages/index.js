@@ -1,6 +1,9 @@
 import React from 'react';
 import { useApp } from '../src/context/AppContext';
 import BottomNav from '../src/components/BottomNav';
+import PomodoroCompleteModal from '../src/components/PomodoroCompleteModal';
+import LoginPage from '../src/pages/LoginPage';
+import RegisterPage from '../src/pages/RegisterPage';
 import HomePage from '../src/pages/HomePage';
 import AddTaskPage from '../src/pages/AddTaskPage';
 import TasksPage from '../src/pages/TasksPage';
@@ -18,6 +21,8 @@ function Router() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', inset: 0, overflowY: 'auto' }}>
+        {page === 'login' && <LoginPage />}
+        {page === 'register' && <RegisterPage />}
         {page === 'home' && <HomePage />}
         {page === 'addtask' && <AddTaskPage />}
         {page === 'tasks' && <TasksPage mode="individual" />}
@@ -28,6 +33,7 @@ function Router() {
         {page === 'activitydetail' && <ActivityDetailPage />}
       </div>
       {showNav && <BottomNav />}
+      <PomodoroCompleteModal />
     </div>
   );
 }

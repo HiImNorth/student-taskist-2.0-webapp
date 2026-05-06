@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useApp } from '../context/AppContext';
 
 export function FAB() {
@@ -21,14 +22,77 @@ export function FAB() {
   );
 }
 
-export function DateTimePill({ time, small }) {
+export function DateTimePill({ time, small, monthYear, onMonthYearClick }) {
   return (
-    <span style={{
-      background: '#000000', color: 'white',
-      borderRadius: 20, padding: small ? '2px 8px' : '3px 10px',
-      fontSize: small ? 12 : 15, fontWeight: 700,
-      fontFamily: 'Google Sans', display: 'inline-block',
-    }}>{time || '12:00'}</span>
+    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+      {monthYear && (
+        <button onClick={onMonthYearClick} style={{
+          background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px',
+          fontSize: 13, fontWeight: 700, fontFamily: 'Google Sans', color: 'inherit',
+        }}>{monthYear}</button>
+      )}
+      <span style={{
+        background: '#000000', color: 'white',
+        borderRadius: 20, padding: small ? '2px 8px' : '3px 10px',
+        fontSize: small ? 12 : 15, fontWeight: 700,
+        fontFamily: 'Google Sans', display: 'inline-block',
+      }}>{time || '12:00'}</span>
+    </div>
+  );
+}
+
+const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CAL_DAYS_HDR = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+export function MiniCalendarPopup({ selectedDate, onSelect, onClose }) {
+  const init = selectedDate ? new Date(selectedDate) : new Date();
+  const [viewYear, setViewYear] = useState(init.getFullYear());
+  const [viewMonth, setViewMonth] = useState(init.getMonth());
+  const today = new Date();
+
+  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); };
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  if (typeof document === 'undefined') return null;
+
+  return ReactDOM.createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)' }} onClick={onClose}>
+      <div style={{ background: 'white', borderRadius: 24, padding: '20px 16px 24px', width: 'min(320px, calc(100vw - 40px))', boxShadow: '0 8px 40px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <button onClick={prevMonth} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: '#f0f0f0', cursor: 'pointer', fontSize: 18, fontWeight: 700 }}>‹</button>
+          <span style={{ fontSize: 16, fontWeight: 700, fontFamily: 'Google Sans', color: '#111' }}>{CAL_MONTHS[viewMonth]} {viewYear}</span>
+          <button onClick={nextMonth} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: '#f0f0f0', cursor: 'pointer', fontSize: 18, fontWeight: 700 }}>›</button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 6 }}>
+          {CAL_DAYS_HDR.map(d => <div key={d} style={{ textAlign: 'center', fontSize: 11, color: '#aaa', fontFamily: 'Google Sans', fontWeight: 600, padding: '4px 0' }}>{d}</div>)}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+          {cells.map((d, i) => {
+            if (!d) return <div key={`e${i}`} />;
+            const date = new Date(viewYear, viewMonth, d);
+            const isToday = date.toDateString() === today.toDateString();
+            const isSel = selectedDate && date.toDateString() === new Date(selectedDate).toDateString();
+            return (
+              <button key={i} onClick={() => onSelect(date)} style={{
+                aspectRatio: '1', borderRadius: '50%', border: 'none',
+                background: isSel ? '#111' : isToday ? '#F5E642' : 'transparent',
+                color: isSel ? 'white' : '#111',
+                fontFamily: 'Google Sans', fontSize: 13,
+                fontWeight: isSel || isToday ? 700 : 400,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{d}</button>
+            );
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -102,6 +166,25 @@ export function WeekStrip({ selectedDate, onSelect }) {
 }
 
 export function ProfileAvatar() {
+  const { currentUser } = useApp();
+  const photo = currentUser?.profilePhoto;
+  const letter = currentUser?.username
+    ? currentUser.username[0].toUpperCase()
+    : currentUser?.name
+      ? currentUser.name[0].toUpperCase()
+      : '?';
+
+  if (photo) {
+    return (
+      <div style={{
+        width: 36, height: 36, borderRadius: '50%',
+        overflow: 'hidden', flexShrink: 0,
+      }}>
+        <img src={photo} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{
       width: 36, height: 36, borderRadius: '50%',
@@ -109,7 +192,7 @@ export function ProfileAvatar() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       color: 'white', fontWeight: 700, fontSize: 14, fontFamily: 'Google Sans',
       flexShrink: 0,
-    }}>U</div>
+    }}>{letter}</div>
   );
 }
 

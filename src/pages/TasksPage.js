@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { FAB, DateTimePill, WeekStrip, ProfileAvatar, ColorDot, PageLogo } from '../components/SharedComponents';
+import { FAB, DateTimePill, WeekStrip, ProfileAvatar, ColorDot, PageLogo, MiniCalendarPopup } from '../components/SharedComponents';
 
 export default function TasksPage({ mode = 'individual' }) {
   const { activities, toggleComplete, setViewingActivity, navigate } = useApp();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filterComplete, setFilterComplete] = useState('all');
   const [showFilter, setShowFilter] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const isGroup = mode === 'groups';
   const headerBg = isGroup ? '#5B5FEF' : '#05d5dc';
@@ -33,7 +34,7 @@ export default function TasksPage({ mode = 'individual' }) {
             <h1 style={{ fontSize: 26, fontWeight: 700, fontFamily: 'Google Sans', color: 'white' }}>{title}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
               <DateTimePill time={timeStr} />
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontFamily: 'Google Sans' }}>{dateStr}</span>
+              <button onClick={() => setShowCalendar(true)} style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontFamily: 'Google Sans', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{dateStr}</button>
             </div>
           </div>
           <ProfileAvatar />
@@ -110,6 +111,13 @@ export default function TasksPage({ mode = 'individual' }) {
       </div>
 
       <FAB />
+      {showCalendar && (
+        <MiniCalendarPopup
+          selectedDate={selectedDate}
+          onSelect={d => { setSelectedDate(d); setShowCalendar(false); }}
+          onClose={() => setShowCalendar(false)}
+        />
+      )}
     </div>
   );
 }

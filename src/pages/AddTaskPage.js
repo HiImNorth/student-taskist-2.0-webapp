@@ -1,11 +1,113 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { WeekStrip, PageLogo } from '../components/SharedComponents';
+import { WeekStrip, PageLogo, MiniCalendarPopup } from '../components/SharedComponents';
 import { MmSsInput } from './PomodoroEditPage';
 
 const COLOR_OPTIONS = ['#F4845F','#FF4F6D','#C8F135','#00C2C7','#A8E6CF','#FFB3C6','#FFE566','#5B5FEF'];
 const TYPE_OPTIONS = ['focus', 'break', 'longbreak'];
 const TYPE_LABELS = { focus: 'Focus', break: 'Break', longbreak: 'Long Break' };
+
+const TP_ITEM_H = 52;
+const TP_HOURS = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+const TP_MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+const TP_PERIODS = ['AM', 'PM'];
+
+function parse24h(t) {
+  const [h, m] = (t || '12:00').split(':').map(Number);
+  const period = h < 12 ? 'AM' : 'PM';
+  const hour12 = h % 12 === 0 ? '12' : String(h % 12);
+  return { hour12, minute: String(m).padStart(2, '0'), period };
+}
+
+function to24h(hour12, minute, period) {
+  let h = parseInt(hour12, 10);
+  if (period === 'AM' && h === 12) h = 0;
+  if (period === 'PM' && h !== 12) h += 12;
+  return `${String(h).padStart(2, '0')}:${minute}`;
+}
+
+function format12h(t) {
+  const { hour12, minute, period } = parse24h(t);
+  return `${hour12}:${minute} ${period}`;
+}
+
+function ScrollCol({ items, initIdx, onChange }) {
+  const ref = useRef(null);
+  const debounce = useRef(null);
+  const [active, setActive] = useState(initIdx);
+
+  useEffect(() => {
+    if (ref.current) ref.current.scrollTop = initIdx * TP_ITEM_H;
+  }, []);
+
+  const onScroll = () => {
+    if (!ref.current) return;
+    const idx = Math.max(0, Math.min(items.length - 1, Math.round(ref.current.scrollTop / TP_ITEM_H)));
+    setActive(idx);
+    clearTimeout(debounce.current);
+    debounce.current = setTimeout(() => onChange(items[idx]), 120);
+  };
+
+  return (
+    <div style={{ position: 'relative', flex: 1 }}>
+      <div ref={ref} onScroll={onScroll} className="tp-col" style={{
+        height: TP_ITEM_H * 5, overflowY: 'scroll', scrollSnapType: 'y mandatory',
+      }}>
+        <div style={{ height: TP_ITEM_H * 2 }} />
+        {items.map((item, i) => (
+          <div key={item} style={{
+            height: TP_ITEM_H, scrollSnapAlign: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: i === active ? 24 : 18,
+            fontWeight: i === active ? 700 : 400,
+            color: i === active ? '#111' : '#c0c0c0',
+            fontFamily: 'Google Sans', userSelect: 'none',
+          }}>{item}</div>
+        ))}
+        <div style={{ height: TP_ITEM_H * 2 }} />
+      </div>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: TP_ITEM_H * 2, background: 'linear-gradient(to bottom, rgba(255,255,255,0.97) 20%, transparent)', pointerEvents: 'none', zIndex: 2 }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: TP_ITEM_H * 2, background: 'linear-gradient(to top, rgba(255,255,255,0.97) 20%, transparent)', pointerEvents: 'none', zIndex: 2 }} />
+    </div>
+  );
+}
+
+function TimePickerSheet({ time, onChange, onClose }) {
+  const { hour12, minute, period } = parse24h(time);
+  const hRef = useRef(hour12);
+  const mRef = useRef(minute);
+  const pRef = useRef(period);
+  const [display, setDisplay] = useState(time);
+
+  const commit = (h, m, p) => {
+    const t = to24h(h, m, p);
+    setDisplay(t);
+    onChange(t);
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', background: 'rgba(0,0,0,0.2)' }} onClick={onClose}>
+      <div style={{ background: 'white', borderRadius: '24px 24px 0 0', padding: '0 16px 36px', boxShadow: '0 -4px 32px rgba(0,0,0,0.12)' }} onClick={e => e.stopPropagation()}>
+        <style>{`.tp-col::-webkit-scrollbar{display:none}`}</style>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 4px 10px' }}>
+          <span style={{ fontSize: 17, fontWeight: 700, fontFamily: 'Google Sans', color: '#111' }}>Time</span>
+          <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'Google Sans', color: '#007AFF', background: '#EFF6FF', borderRadius: 20, padding: '4px 14px' }}>
+            {format12h(display)}
+          </span>
+        </div>
+        <div style={{ height: 1, background: '#f0f0f0', marginBottom: 0 }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', top: TP_ITEM_H * 2, height: TP_ITEM_H, left: 4, right: 4, background: '#f2f2f2', borderRadius: 14, pointerEvents: 'none', zIndex: 1 }} />
+          <div style={{ display: 'flex', position: 'relative', zIndex: 2 }}>
+            <ScrollCol items={TP_HOURS} initIdx={TP_HOURS.indexOf(hour12)} onChange={val => { hRef.current = val; commit(val, mRef.current, pRef.current); }} />
+            <ScrollCol items={TP_MINUTES} initIdx={TP_MINUTES.indexOf(minute)} onChange={val => { mRef.current = val; commit(hRef.current, val, pRef.current); }} />
+            <ScrollCol items={TP_PERIODS} initIdx={TP_PERIODS.indexOf(period)} onChange={val => { pRef.current = val; commit(hRef.current, mRef.current, val); }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AddTaskPage() {
   const {
@@ -23,6 +125,8 @@ export default function AddTaskPage() {
   const [date, setDate] = useState(editing?.date ? new Date(editing.date) : new Date());
   const [time, setTime] = useState(editing?.time || '12:00');
   const [pomodoroEnabled, setPomodoroEnabled] = useState(editing?.pomodoroEnabled || false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const colorInputRef = useRef(null);
 
   // Session editor state (mirrors PomodoroEditPage)
@@ -150,13 +254,20 @@ export default function AddTaskPage() {
 
         {/* Date & Time */}
         <div style={{ marginBottom: 16 }}>
+          <button onClick={() => setShowCalendar(true)} style={{
+            display: 'block', width: '100%', textAlign: 'center', marginBottom: 6,
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 13, fontWeight: 700, fontFamily: 'Google Sans', color: '#555',
+          }}>
+            {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </button>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <label style={{ fontSize: 12, color: '#555', fontFamily: 'Google Sans', fontWeight: 600 }}>Date / Time</label>
-            <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{
+            <button onClick={() => setShowTimePicker(true)} style={{
               border: 'none', background: '#00C2C7', color: 'white', borderRadius: 20,
-              padding: '3px 12px', fontSize: 12, fontFamily: 'Google Sans', fontWeight: 700,
-              outline: 'none', cursor: 'pointer',
-            }} />
+              padding: '4px 14px', fontSize: 12, fontFamily: 'Google Sans', fontWeight: 700,
+              cursor: 'pointer',
+            }}>{format12h(time)}</button>
           </div>
           <WeekStrip selectedDate={date} onSelect={setDate} />
         </div>
@@ -266,6 +377,21 @@ export default function AddTaskPage() {
           fontFamily: 'Google Sans', cursor: 'pointer',
         }}>Save</button>
       </div>
+
+      {showTimePicker && (
+        <TimePickerSheet
+          time={time}
+          onChange={setTime}
+          onClose={() => setShowTimePicker(false)}
+        />
+      )}
+      {showCalendar && (
+        <MiniCalendarPopup
+          selectedDate={date}
+          onSelect={d => { setDate(d); setShowCalendar(false); }}
+          onClose={() => setShowCalendar(false)}
+        />
+      )}
     </div>
   );
 }

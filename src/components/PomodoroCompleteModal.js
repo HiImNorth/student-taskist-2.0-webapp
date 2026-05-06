@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { useApp } from '../context/AppContext';
 
 export default function PomodoroCompleteModal() {
@@ -13,7 +14,7 @@ export default function PomodoroCompleteModal() {
     navigate,
   } = useApp();
 
-  if (!pomodoroFinished) return null;
+  if (!pomodoroFinished || typeof document === 'undefined') return null;
 
   const isCustom = pomodoroFinishedMode === 'custom';
   const isFocus = pomodoroFinishedMode === 'focus';
@@ -53,7 +54,7 @@ export default function PomodoroCompleteModal() {
   const icon = isCustom ? '⏰' : isFocus ? '☕' : '🎯';
   const title = isCustom ? 'Timer done!' : isFocus ? 'Focus session done!' : 'Break time is over!';
 
-  return (
+  return ReactDOM.createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -118,6 +119,7 @@ export default function PomodoroCompleteModal() {
           Done
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
